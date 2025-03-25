@@ -1,5 +1,4 @@
-// source - database
-// Dbinstance - описывает взаимодейсвие с баззой данных
+// source - describes a container for pointe sql.DB
 package source
 
 import (
@@ -28,11 +27,13 @@ func Init(dataSourceName string) *sql.DB {
 	return db
 }
 
+// URLParam - get from .env file and create dataSourceName for 'sql.Opne(,dataSourceName)'
+//
+//	postgres://jack:secret@pg.example.com:5432/mydb?sslmode=verify-ca&pool_max_conns=10&pool_max_conn_lifetime=1h30m
 func URLParam(path string) string {
 	if err := godotenv.Load(path); err != nil {
 		log.Fatalf("source - no .env data: %v", err)
 	}
-	//	postgres://jack:secret@pg.example.com:5432/mydb?sslmode=verify-ca&pool_max_conns=10&pool_max_conn_lifetime=1h30m
 	dsn := fmt.Sprintf(
 		`postgres://%s:%s@%s:%s/%s?sslmode=%s`,
 		os.Getenv("DB_USER"),
@@ -42,6 +43,5 @@ func URLParam(path string) string {
 		os.Getenv("DB_NAME"),
 		os.Getenv("DB_SSLMODE"),
 	)
-	log.Printf("\n%s\n", dsn)
 	return dsn
 }

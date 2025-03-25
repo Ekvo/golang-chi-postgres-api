@@ -1,4 +1,4 @@
-// common - универсальные инструменты
+// common - universal utilities
 package common
 
 import (
@@ -10,10 +10,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// Message - формат тела для Response
+// Message - body format for response
 type Message map[string]any
 
-// MessageError - формат тела ошибки для Response
+// MessageError - error body format for response
 type MessageError struct {
 	Msg Message `json:"errors"`
 }
@@ -23,17 +23,17 @@ func NewMessageError(key string, err error) MessageError {
 	return MessageError{Msg: errStore}
 }
 
-// ошибка для защиты от некоректного использования:
+// label for incorrect use - 'func (fv FiledValidator) FieldName() (string, error)'
 // getFieldName(structNamespace string) (string, error)
 var ErrCommonFiledValidatorIncorrect = errors.New("incorrect struct namespace")
 
-// FiledValidator - для создания кастомных функций обработки ошибок
-// объекта validator.FieldError
+// FiledValidator - creating custom error handling functions
+// for object 'validator.FieldError'
 type FiledValidator struct {
 	validator.FieldError
 }
 
-// FieldName - получении имени поля из validator.FieldError StructNamespace()
+// FieldName - get name field from validator.FieldError StructNamespace()
 func (fv FiledValidator) FieldName() (string, error) {
 	structNamespace := fv.StructNamespace()
 	n := len(structNamespace)
@@ -50,8 +50,8 @@ func (fv FiledValidator) FieldName() (string, error) {
 	return "", ErrCommonFiledValidatorIncorrect
 }
 
-// NewMessageErrorFromValidator - обработка ошибки
-// после ('func Bind(r *http.Request, obj any) error')
+// NewMessageErrorFromValidator - handler error
+// after ('func Bind(r *http.Request, obj any) error')
 func NewMessageErrorFromValidator(err error) MessageError {
 	dataErr := err.(validator.ValidationErrors)
 	errStore := make(Message)
@@ -66,8 +66,8 @@ func NewMessageErrorFromValidator(err error) MessageError {
 	return MessageError{Msg: errStore}
 }
 
-// Bind - получение объекта из 'Request'
-// с проверкой объекта на определенный свойсва (см. servises)
+// Bind - get object from 'Request'
+// with checking an object for certain properties (look ~> ../../internal/servises/validator.go)
 func Bind(r *http.Request, obj any) error {
 	b := binding.Default(r.Method, r.Header.Get("Content-Type"))
 	return b.Bind(r, obj)

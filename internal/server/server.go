@@ -1,3 +1,4 @@
+// server  - describes a container for pointe http.Server
 package server
 
 import (
@@ -15,6 +16,7 @@ import (
 
 const TimeShutServer = 10 * time.Second
 
+// Connect - wrapper http.Server
 type Connect struct {
 	srv *http.Server
 }

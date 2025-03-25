@@ -1,4 +1,4 @@
-// model - описывает объект Task и интерфейс
+// model - describe the Task object and its implementing interfaces
 package model
 
 import (
@@ -6,7 +6,6 @@ import (
 	"time"
 )
 
-// объект описывающий таблицу в базе данных
 type Task struct {
 	ID          uint
 	Description string
@@ -15,19 +14,19 @@ type Task struct {
 	UpdatedAt   *time.Time
 }
 
-// TaskTables - создание таблицы хранязей объект 'Task'
+// TaskTables - create table of 'Task'
 type TaskTables interface {
 	CreateTables(ctx context.Context) error
 }
 
-// TaskUpdate - созданиеб обновлениеб удаление 'Task'
+// TaskUpdate - create update, dalete 'Task'
 type TaskUpdate interface {
 	SaveOneTask(ctx context.Context, data any) (uint, error)
 	UpdateTask(ctx context.Context, data any) error
 	EndTaskLife(ctx context.Context, data any) error
 }
 
-// TaskFind - поиск статьи или набора статей по переданному параметру 'data'
+// TaskFind - find of 'Task', 'TaskList'
 type TaskFind interface {
 	FindOneTask(ctx context.Context, data any) (Task, error)
 	FindTaskList(ctx context.Context, data any) ([]Task, error)

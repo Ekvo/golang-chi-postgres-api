@@ -5,12 +5,12 @@ import (
 	vr "github.com/Ekvo/golang-postgres-chi-api/internal/variables"
 )
 
-// TaskSerializer - содержит полный наобр данных объекта 'models.Task'
+// TaskSerializer - contains one "models.Task" to serialize into Response
 type TaskSerializer struct {
 	m.Task
 }
 
-// TaskResponse - формат объета 'Task' для 'Response'
+// TaskResponse - format object 'Task' for 'Response'
 type TaskResponse struct {
 	Description string `json:"description"`
 	Note        string `json:"note,omitempty"`
@@ -18,7 +18,7 @@ type TaskResponse struct {
 	UpdatedAt   string `json:"updated_at,omitempty"`
 }
 
-// ts *TaskSerializer) Response() - возвращает объкт для записи в 'ResponseWriter'
+// (ts *TaskSerializer) Response() - returns an object to write to 'ResponseWriter'
 func (ts *TaskSerializer) Response() TaskResponse {
 	tr := TaskResponse{
 		Description: ts.Description,

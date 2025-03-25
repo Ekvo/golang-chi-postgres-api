@@ -18,7 +18,7 @@ import (
 	"github.com/Ekvo/golang-postgres-chi-api/pkg/common"
 )
 
-// ErrTransportParam - некоректный параметр 'chi.URLParam'
+// ErrTransportParam - ivalid param from 'chi.URLParam'
 var ErrTransportParam = errors.New("invalid params")
 
 func TaskCreate(db m.TaskUpdate) http.HandlerFunc {
@@ -53,11 +53,12 @@ func TaskUpdate(db m.TaskUpdate) http.HandlerFunc {
 		}
 		task := taskValidator.TaskModel()
 		task.ID = uint(id)
+		task.UpdatedAt = &task.CreatedAt
 		if err := db.UpdateTask(ctx, task); err != nil {
 			encodeJSON(ctx, w, http.StatusNotFound, common.NewMessageError(vr.Task, s.ErrSourceNotFound))
 			return
 		}
-		encodeJSON(ctx, w, http.StatusOK, common.Message{vr.Task: "update"})
+		encodeJSON(ctx, w, http.StatusOK, common.Message{vr.Task: "updated"})
 	}
 }
 
@@ -82,7 +83,7 @@ func TaskByID(db m.TaskFind) http.HandlerFunc {
 		ctx := r.Context()
 		id, err := strconv.Atoi(chi.URLParam(r, "id"))
 		if err != nil {
-			encodeJSON(ctx, w, http.StatusBadRequest, ErrTransportParam)
+			encodeJSON(ctx, w, http.StatusBadRequest, common.NewMessageError(vr.Params, ErrTransportParam))
 			return
 		}
 		task, err := db.FindOneTask(ctx, uint(id))
@@ -95,7 +96,8 @@ func TaskByID(db m.TaskFind) http.HandlerFunc {
 	}
 }
 
-// формирования запроса 't.r.Post("/tasks/{order}/{limit}/{offset}")'
+// param from request 't.r.Post("/tasks/{order}/{limit}/{offset}")'
+// describes 'ORDER BY in PostgresSQL'
 const (
 	asc  = "asc"
 	desc = "desc"
@@ -119,7 +121,7 @@ func TaskList(db m.TaskFind) http.HandlerFunc {
 		}
 		tasks, err := db.FindTaskList(ctx, []string{order, limit, offset})
 		if err != nil || len(tasks) == 0 {
-			encodeJSON(ctx, w, http.StatusNoContent, common.NewMessageError(vr.DataBase, err))
+			encodeJSON(ctx, w, http.StatusNoContent, common.NewMessageError(vr.DataBase, s.ErrSourceNotFound))
 			return
 		}
 		serialize := servises.TaskListSerializer{tasks}
@@ -127,9 +129,9 @@ func TaskList(db m.TaskFind) http.HandlerFunc {
 	}
 }
 
-// encodeJSON - записываем статус и объект типа 'json' в 'ResponseWriter'
+// encodeJSON - we write the status and the object type of 'json' to 'ResponseWriter'
 //
-// if ctx.Err() == context.DeadlineExceeded - возвращаемся в  'func Timeout(timeout time.Duration)'
+// if ctx.Err() == context.DeadlineExceeded - return us to 'func Timeout(timeout time.Duration)'
 func encodeJSON(ctx context.Context, w http.ResponseWriter, status int, obj any) {
 	if ctx.Err() == context.DeadlineExceeded {
 		return

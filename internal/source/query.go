@@ -1,4 +1,4 @@
-// взаимодейсвие с базой данных
+// source - database query
 package source
 
 import (
@@ -12,7 +12,7 @@ import (
 
 var ErrSourceNotFound = errors.New("not found")
 
-// ErrSourceIncorrectData - некоректные данные переданные в функцию ('data any')
+// ErrSourceIncorrectData - incorrect (data any) passed to the function
 var ErrSourceIncorrectData = errors.New("invalid data")
 
 func (d *Dbinstance) CreateTables(ctx context.Context) error {
@@ -122,7 +122,7 @@ LIMIT %s OFFSET %s;`,
 	return scanTakList(rows)
 }
 
-// TaskScaner - для дженерик функциb 'scannerTask'
+// TaskScaner - for generic function 'scannerTask'
 type RowScaner interface {
 	*sql.Row | *sql.Rows
 	Scan(dest ...any) error

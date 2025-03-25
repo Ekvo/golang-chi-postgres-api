@@ -2,7 +2,11 @@ package source
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"github.com/joho/godotenv"
 	"log"
+	"os"
 	"testing"
 	"time"
 
@@ -12,9 +16,11 @@ import (
 	"github.com/Ekvo/golang-postgres-chi-api/internal/model"
 )
 
-// для проверки при получении задачи из базы данных
-var timeCreate = time.Now().UTC()
-var timeUpdate = timeCreate.Add(1 * time.Second)
+// to check when receiving a task from the database
+var (
+	timeCreate = time.Now().UTC()
+	timeUpdate = timeCreate.Add(1 * time.Second)
+)
 
 func newValidTask() model.Task {
 	return model.Task{
@@ -51,7 +57,7 @@ var qq = []struct {
 		init: func(ctx context.Context, d *Dbinstance, data any) (any, error) {
 			return nil, d.CreateTables(ctx)
 		},
-		ctxTimeOut:     100 * time.Second,
+		ctxTimeOut:     1 * time.Second,
 		data:           nil,
 		expectedResutl: nil,
 		haveErr:        false,
@@ -84,7 +90,7 @@ var qq = []struct {
 		init: func(ctx context.Context, d *Dbinstance, data any) (any, error) {
 			return nil, d.UpdateTask(ctx, data)
 		},
-		ctxTimeOut:     100 * time.Second,
+		ctxTimeOut:     1 * time.Second,
 		data:           updateTask(200),
 		expectedResutl: nil,
 		haveErr:        true,
@@ -96,7 +102,7 @@ var qq = []struct {
 		init: func(ctx context.Context, d *Dbinstance, data any) (any, error) {
 			return d.FindOneTask(ctx, data)
 		},
-		ctxTimeOut:     100 * time.Second,
+		ctxTimeOut:     1 * time.Second,
 		data:           uint(1),
 		expectedResutl: updateTask(1),
 		haveErr:        false,
@@ -108,7 +114,7 @@ var qq = []struct {
 		init: func(ctx context.Context, d *Dbinstance, data any) (any, error) {
 			return d.FindOneTask(ctx, data)
 		},
-		ctxTimeOut:     100 * time.Second,
+		ctxTimeOut:     1 * time.Second,
 		data:           uint(200),
 		expectedResutl: model.Task{},
 		haveErr:        true,
@@ -120,7 +126,7 @@ var qq = []struct {
 		init: func(ctx context.Context, d *Dbinstance, data any) (any, error) {
 			return nil, d.EndTaskLife(ctx, data)
 		},
-		ctxTimeOut:     100 * time.Second,
+		ctxTimeOut:     1 * time.Second,
 		data:           uint(1),
 		expectedResutl: nil,
 		haveErr:        false,
@@ -132,7 +138,7 @@ var qq = []struct {
 		init: func(ctx context.Context, d *Dbinstance, data any) (any, error) {
 			return nil, d.EndTaskLife(ctx, data)
 		},
-		ctxTimeOut:     100 * time.Second,
+		ctxTimeOut:     1 * time.Second,
 		data:           uint(1),
 		expectedResutl: nil,
 		haveErr:        true,
@@ -141,15 +147,32 @@ var qq = []struct {
 	},
 }
 
+// connect for other test base 'postgres'
+// table in base 'prometheus' - in save
 func TestQueryDbinstance(t *testing.T) {
 	asserts := assert.New(t)
 
-	db := Init(URLParam("../../.env"))
+	if err := godotenv.Load("../../.env"); err != nil {
+		log.Fatalf("source - no .env data: %v", err)
+	}
+	dataSourceName := fmt.Sprintf(
+		`postgres://%s:%s@%s:%s/%s?sslmode=%s`,
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("HOST"),
+		os.Getenv("DB_PORT"),
+		os.Getenv("DB_TEST_NAME"),
+		os.Getenv("DB_SSLMODE"),
+	)
+	db, err := sql.Open("postgres", dataSourceName)
+	if err != nil {
+		log.Fatalf("sql.Open - %v", err)
+	}
 	defer db.Close()
 	base := NewDbinstance(db)
 
-	// удаление таблицы для корректных тестов
-	//db.Exec(`DROP TABLE tasks;`)
+	// for clear test
+	db.Exec(`DROP TABLE tasks;`)
 
 	for i, query := range qq {
 		log.Printf("\t %d query: %s\n", i+1, query.description)
@@ -180,5 +203,5 @@ func TestQueryDbinstance(t *testing.T) {
 			asserts.Equal(query.expectedResutl, result, query.msg)
 		}
 	}
-	//db.Exec(`DROP TABLE tasks;`)
+
 }

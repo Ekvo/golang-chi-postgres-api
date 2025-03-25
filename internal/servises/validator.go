@@ -8,7 +8,7 @@ import (
 	"github.com/Ekvo/golang-postgres-chi-api/pkg/common"
 )
 
-// TaskValidator - описывает свойсва получаемого объекта для создания 'models.Task'
+// TaskValidator - describe property of getting and creating 'Task' object from a Request
 type TaskValidator struct {
 	Data struct {
 		Description string `json:"description" binding:"required,min=1,max=2048"`
@@ -17,7 +17,7 @@ type TaskValidator struct {
 	task model.Task `json:"-"`
 }
 
-// NewTaskValidator - если нужны 'Default' значения
+// NewTaskValidator - if need add 'Default' params
 func NewTaskValidator() *TaskValidator {
 	return &TaskValidator{}
 }
@@ -26,7 +26,7 @@ func (tv *TaskValidator) TaskModel() model.Task {
 	return tv.task
 }
 
-// Bind - получение объекта и создание 'models.Task' на основе 'Data'
+// Bind - get 'Data' and create 'Task'
 func (tv *TaskValidator) Bind(r *http.Request) error {
 	if err := common.Bind(r, tv); err != nil {
 		return err

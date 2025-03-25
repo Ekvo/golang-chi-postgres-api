@@ -1,4 +1,4 @@
-// transport - сервер и маршрутизатор
+// transport - describe handlers
 package transport
 
 import (
@@ -11,7 +11,7 @@ import (
 	m "github.com/Ekvo/golang-postgres-chi-api/internal/model"
 )
 
-// Transport - управление маршрутизацией
+// Transport - contain HTTP route multiplexer
 type Transport struct {
 	r *chi.Mux
 }
@@ -20,13 +20,13 @@ func NewTransport(r *chi.Mux) *Transport {
 	return &Transport{r: r}
 }
 
-// в паре с 'func Timeout(timeout time.Duration) func(next http.Handler) http.Handler'
+// in pair with 'func Timeout(timeout time.Duration) func(next http.Handler) http.Handler'
 const timeOut = 10 * time.Second
 
 func (t *Transport) Routes(db m.TaskFindUpdate) {
-	router := t.r
-	router.Use(Timeout(timeOut))
-	router.Mount("/task", taskRoutes(db))
+	r := t.r
+	r.Use(Timeout(timeOut))
+	r.Mount("/task", taskRoutes(db))
 }
 
 func taskRoutes(db m.TaskFindUpdate) chi.Router {
@@ -39,8 +39,8 @@ func taskRoutes(db m.TaskFindUpdate) chi.Router {
 	return r
 }
 
-// Timeout - middleware функция
-// задает время выполнени запроса через 'contxt'
+// Timeout - middleware
+// sets the query execution time use 'context'
 func Timeout(timeout time.Duration) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
