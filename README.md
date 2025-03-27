@@ -73,9 +73,9 @@ From root project
 go test ./...
 ```
 
-./pkg/common         -> 94.1% of statements
-./internal/source    -> 60.9% of statements
-./internal/transport -> 70.1% of statements
+./pkg/common         -> 94.1% of statements  
+./internal/source    -> 60.9% of statements  
+./internal/transport -> 70.1% of statements  
 
 _***Use** From package*_
 ```
