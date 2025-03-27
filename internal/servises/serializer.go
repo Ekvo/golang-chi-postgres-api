@@ -1,13 +1,13 @@
 package servises
 
 import (
-	m "github.com/Ekvo/golang-postgres-chi-api/internal/model"
-	vr "github.com/Ekvo/golang-postgres-chi-api/internal/variables"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/variables"
 )
 
 // TaskSerializer - contains one "models.Task" to serialize into Response
 type TaskSerializer struct {
-	m.Task
+	model.Task
 }
 
 // TaskResponse - format object 'Task' for 'Response'
@@ -23,16 +23,16 @@ func (ts *TaskSerializer) Response() TaskResponse {
 	tr := TaskResponse{
 		Description: ts.Description,
 		Note:        ts.Note,
-		CreatedAt:   ts.CreatedAt.UTC().Format(vr.RFC3339Milli),
+		CreatedAt:   ts.CreatedAt.UTC().Format(variables.RFC3339Milli),
 	}
 	if ptrUpAt := ts.UpdatedAt; ptrUpAt != nil {
-		tr.UpdatedAt = ptrUpAt.UTC().Format(vr.RFC3339Milli)
+		tr.UpdatedAt = ptrUpAt.UTC().Format(variables.RFC3339Milli)
 	}
 	return tr
 }
 
 type TaskListSerializer struct {
-	Tasks []m.Task
+	Tasks []model.Task
 }
 
 func (tls *TaskListSerializer) Response() []TaskResponse {

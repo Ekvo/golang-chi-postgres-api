@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	m "github.com/Ekvo/golang-postgres-chi-api/internal/model"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 )
 
 // Transport - contain HTTP route multiplexer
@@ -23,13 +23,13 @@ func NewTransport(r *chi.Mux) *Transport {
 // in pair with 'func Timeout(timeout time.Duration) func(next http.Handler) http.Handler'
 const timeOut = 10 * time.Second
 
-func (t *Transport) Routes(db m.TaskFindUpdate) {
+func (t *Transport) Routes(db model.TaskFindUpdate) {
 	r := t.r
 	r.Use(Timeout(timeOut))
 	r.Mount("/task", taskRoutes(db))
 }
 
-func taskRoutes(db m.TaskFindUpdate) chi.Router {
+func taskRoutes(db model.TaskFindUpdate) chi.Router {
 	r := chi.NewRouter()
 	r.Post("/", TaskCreate(db))
 	r.Get("/{id}", TaskByID(db))

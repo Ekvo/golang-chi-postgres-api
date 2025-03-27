@@ -2,12 +2,12 @@
 package common
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
+	"mime"
 	"net/http"
-
-	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/validator/v10"
 )
 
 // Message - body format for response
@@ -23,52 +23,34 @@ func NewMessageError(key string, err error) MessageError {
 	return MessageError{Msg: errStore}
 }
 
-// label for incorrect use - 'func (fv FiledValidator) FieldName() (string, error)'
-// getFieldName(structNamespace string) (string, error)
-var ErrCommonFiledValidatorIncorrect = errors.New("incorrect struct namespace")
+var ErrCommonInvalidMedia = errors.New("invalid media type")
 
-// FiledValidator - creating custom error handling functions
-// for object 'validator.FieldError'
-type FiledValidator struct {
-	validator.FieldError
+// DecodeJSON - get object from 'Request'
+// with checking an object for correct fields (look ~> ../../internal/servises/validator.go)
+func DecodeJSON(r *http.Request, obj any) error {
+	media := r.Header.Get("Content-Type")
+	parse, _, err := mime.ParseMediaType(media)
+	if err != nil || parse != "application/json" {
+		return ErrCommonInvalidMedia
+	}
+	reqBody := r.Body
+	defer reqBody.Close()
+	dec := json.NewDecoder(reqBody)
+	dec.DisallowUnknownFields()
+	return dec.Decode(obj)
 }
 
-// FieldName - get name field from validator.FieldError StructNamespace()
-func (fv FiledValidator) FieldName() (string, error) {
-	structNamespace := fv.StructNamespace()
-	n := len(structNamespace)
-	if n < 3 ||
-		structNamespace[0] == '.' ||
-		structNamespace[n-1] == '.' {
-		return "", ErrCommonFiledValidatorIncorrect
+// EncodeJSON - we write the status and the object type of 'json' to 'ResponseWriter'
+//
+// if ctx.Err() == context.DeadlineExceeded - return us to 'func Timeout(timeout time.Duration)' ()
+// (look ~> ../../internal/transport/transport.go)
+func EncodeJSON(ctx context.Context, w http.ResponseWriter, status int, obj any) {
+	if ctx.Err() == context.DeadlineExceeded {
+		return
 	}
-	for i := n - 1; i > -1; i-- {
-		if structNamespace[i] == '.' {
-			return structNamespace[i+1 : n], nil
-		}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(obj); err != nil {
+		log.Printf("json.Encode error - %v", err)
 	}
-	return "", ErrCommonFiledValidatorIncorrect
-}
-
-// NewMessageErrorFromValidator - handler error
-// after ('func Bind(r *http.Request, obj any) error')
-func NewMessageErrorFromValidator(err error) MessageError {
-	dataErr := err.(validator.ValidationErrors)
-	errStore := make(Message)
-	for _, field := range dataErr {
-		info := field.Param()
-		if len(info) == 0 {
-			fv := FiledValidator{field}
-			info, _ = fv.FieldName()
-		}
-		errStore[field.Field()] = fmt.Sprintf("{%v:%v}", field.Tag(), info)
-	}
-	return MessageError{Msg: errStore}
-}
-
-// Bind - get object from 'Request'
-// with checking an object for certain properties (look ~> ../../internal/servises/validator.go)
-func Bind(r *http.Request, obj any) error {
-	b := binding.Default(r.Method, r.Header.Get("Content-Type"))
-	return b.Bind(r, obj)
 }

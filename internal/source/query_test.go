@@ -4,16 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
 	"log"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Ekvo/golang-postgres-chi-api/internal/model"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 )
 
 // to check when receiving a task from the database

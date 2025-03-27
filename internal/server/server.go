@@ -1,4 +1,4 @@
-// server  - describes a container for pointe http.Server
+// server  - describes a container for pointer http.Server
 package server
 
 import (
@@ -18,11 +18,11 @@ const TimeShutServer = 10 * time.Second
 
 // Connect - wrapper http.Server
 type Connect struct {
-	srv *http.Server
+	*http.Server
 }
 
 func NewServer(srv *http.Server) *Connect {
-	return &Connect{srv: srv}
+	return &Connect{srv}
 }
 
 func Init(r http.Handler, envPath string) *Connect {
@@ -48,10 +48,10 @@ func Init(r http.Handler, envPath string) *Connect {
 	return NewServer(srv)
 }
 
-func (c *Connect) ListenAndServe(ctx context.Context, timeShut time.Duration) {
-	server := c.srv
+func (c *Connect) ListenAndServeAndShut(ctx context.Context, timeShut time.Duration) {
+
 	go func() {
-		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		if err := c.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("HTTP server error: %v", err)
 		}
 		log.Println("Stopped serving new connections.")
@@ -64,7 +64,7 @@ func (c *Connect) ListenAndServe(ctx context.Context, timeShut time.Duration) {
 	shutdownCtx, shutdownRelease := context.WithTimeout(ctx, timeShut)
 	defer shutdownRelease()
 
-	if err := server.Shutdown(shutdownCtx); err != nil {
+	if err := c.Shutdown(shutdownCtx); err != nil {
 		log.Fatalf("HTTP shutdown error: %v", err)
 	}
 	log.Println("Graceful shutdown complete.")

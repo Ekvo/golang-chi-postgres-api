@@ -1,15 +1,14 @@
 // REST API property and features.
 
-// CRUD
-// Data Transfer Object (DTO)
-// SOLID
+// Design patterns
+/*
+* CRUD
+* Data Transfer Object (DTO)
+* SOLID
+ */
 
 // DataBase    - PostgresSQL
 // multiplexer - chi
-
-// Rules for getting object from Request and write to Response
-// - github.com/gin-gonic/gin/binding
-// - github.com/go-playground/validator/v10
 
 // package main ~> ../cmd/app
 // logic of application
@@ -73,12 +72,8 @@
 // packege common ~> ../pkg/common
 // universal utilities
 /*
- * struct - MessageError   - wrap error for Response
- * strucе - FiledValidator - custom error of 'validator.FieldError'
- * describes error getting an invalid object from Request
-
- * FieldName - FiledValidator member
- * func - NewMessageErrorFromValidator - create MessageError from 'validator.FieldError' object
- * func - Bind
+ * struct - MessageError - wrap error for Response
+ * func - DecodeJSON
+ * func - EncodeJSON
  */
 package docs

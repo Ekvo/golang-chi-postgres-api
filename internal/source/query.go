@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	m "github.com/Ekvo/golang-postgres-chi-api/internal/model"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 )
 
 var ErrSourceNotFound = errors.New("not found")
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS tasks
 }
 
 func (d *Dbinstance) SaveOneTask(ctx context.Context, data any) (uint, error) {
-	newTask := data.(m.Task)
+	newTask := data.(model.Task)
 	taskNote := newTask.Note
 	err := d.db.QueryRowContext(ctx, `
 WITH new_task AS(
@@ -46,7 +46,7 @@ FROM new_task;`,
 }
 
 func (d *Dbinstance) UpdateTask(ctx context.Context, data any) error {
-	updateTask := data.(m.Task)
+	updateTask := data.(model.Task)
 	taskNote := updateTask.Note
 	taskID := 0
 	tx, err := d.db.BeginTx(ctx, nil)
@@ -91,7 +91,7 @@ RETURNING id;`, taskID).Scan(&delTaskID)
 	return tx.Commit()
 }
 
-func (d *Dbinstance) FindOneTask(ctx context.Context, data any) (m.Task, error) {
+func (d *Dbinstance) FindOneTask(ctx context.Context, data any) (model.Task, error) {
 	taskID := data.(uint)
 	row := d.db.QueryRowContext(ctx, `
 SELECT *
@@ -101,7 +101,7 @@ LIMIT 1;`, taskID)
 	return scanOneTask[*sql.Row](row)
 }
 
-func (d *Dbinstance) FindTaskList(ctx context.Context, data any) ([]m.Task, error) {
+func (d *Dbinstance) FindTaskList(ctx context.Context, data any) ([]model.Task, error) {
 	taskList := data.([]string)
 	if len(taskList) != 3 {
 		return nil, ErrSourceIncorrectData
@@ -128,8 +128,8 @@ type RowScaner interface {
 	Scan(dest ...any) error
 }
 
-func scanOneTask[S RowScaner](r S) (m.Task, error) {
-	task := m.Task{}
+func scanOneTask[S RowScaner](r S) (model.Task, error) {
+	task := model.Task{}
 	updatedAt := sql.NullTime{}
 	note := sql.NullString{}
 	if err := r.Scan(
@@ -150,8 +150,8 @@ func scanOneTask[S RowScaner](r S) (m.Task, error) {
 	return task, nil
 }
 
-func scanTakList(rows *sql.Rows) ([]m.Task, error) {
-	var tasks []m.Task
+func scanTakList(rows *sql.Rows) ([]model.Task, error) {
+	var tasks []model.Task
 	for rows.Next() {
 		task, err := scanOneTask[*sql.Rows](rows)
 		if err != nil {

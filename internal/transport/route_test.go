@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Ekvo/golang-postgres-chi-api/internal/model"
-	"github.com/Ekvo/golang-postgres-chi-api/internal/source"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/source"
 )
 
 type TasksMock struct {
@@ -102,7 +102,7 @@ func (m *TasksMock) FindTaskList(ctx context.Context, data any) ([]model.Task, e
 	return tasks, ctx.Err()
 }
 
-// Проверка - HandlerFunc
+// HandlerFunc
 var routeTestData = []struct {
 	description    string
 	url            string
@@ -127,7 +127,7 @@ var routeTestData = []struct {
 		method:         http.MethodPost,
 		bodyData:       `{"task_update":{"note":"second task"}}`,
 		expectedCode:   http.StatusUnprocessableEntity,
-		responseRegexp: `{"errors":{"Description":"{required:Description}"}}`,
+		responseRegexp: `{"errors":{"validator":"invalid task update"}}`,
 		msg:            "invalid - task not to be must created & status 422",
 	},
 	{

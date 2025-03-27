@@ -14,12 +14,12 @@ type Task struct {
 	UpdatedAt   *time.Time
 }
 
-// TaskTables - create table of 'Task'
+// TaskTables - create table in database of 'Task'
 type TaskTables interface {
 	CreateTables(ctx context.Context) error
 }
 
-// TaskUpdate - create update, dalete 'Task'
+// TaskUpdate - create, update, dalete 'Task'
 type TaskUpdate interface {
 	SaveOneTask(ctx context.Context, data any) (uint, error)
 	UpdateTask(ctx context.Context, data any) error
