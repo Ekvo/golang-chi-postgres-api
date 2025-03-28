@@ -1,4 +1,4 @@
-# Golang/chi/PostgresQL REST API.
+# Golang/chi/PostgresSQL REST API.
 
 This code demonstrates the CRUD principle in implementing a REST API using golang/chi and PostgresSQL.  
 
@@ -49,11 +49,11 @@ go get github.com/lib/pq
 ```
  * Small and composable router -> [chi](https://pkg.go.dev/github.com/go-chi/chi "https://pkg.go.dev/github.com/go-chi/chi")
 ```
-github.com/go-chi/chi/v5
+go get github.com/go-chi/chi/v5
 ```
  * Simple to understand and use - testing tools
 ```
-github.com/stretchr/testify
+go get github.com/stretchr/testify
 ```
 
 ### Docker
@@ -77,7 +77,7 @@ go test ./...
 ./internal/source    -> 60.9% of statements  
 ./internal/transport -> 70.1% of statements  
 
-_***Use** From package*_
+_**Use** From package_
 ```
 go test . -coverprofile=coverage.out
 go tool cover -html=coverage
@@ -95,7 +95,7 @@ curl -X POST -H "Content-Type: application/json" -d '{"task_update":{"descriptio
 curl -i -H "Accept: application/json" http://127.0.0.1:3000/task/desc/1/0
 ```
 
-*Thank you for you time:)*  
+*Thank you for your time:)*  
 ps. to use *locally* you need to change `HOST` in `.env` to `127.0.0.1`
 
 

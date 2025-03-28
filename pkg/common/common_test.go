@@ -6,11 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Ekvo/golang-chi-postgres-api/internal/source"
-	"github.com/Ekvo/golang-chi-postgres-api/internal/variables"
-	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +13,13 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/Ekvo/golang-chi-postgres-api/internal/source"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/variables"
 )
 
 func TestDecodeJSON(t *testing.T) {

@@ -2,7 +2,6 @@ package transport
 
 import (
 	"errors"
-	"github.com/Ekvo/golang-chi-postgres-api/internal/source"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 	"github.com/Ekvo/golang-chi-postgres-api/internal/servises"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/source"
 	vr "github.com/Ekvo/golang-chi-postgres-api/internal/variables"
 	c "github.com/Ekvo/golang-chi-postgres-api/pkg/common"
 )

@@ -1,3 +1,5 @@
+// This application: gets, saves, reads, updates and deletes a Task object, using the following patterns and tools.
+
 // REST API property and features.
 
 // Design patterns

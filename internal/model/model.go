@@ -26,7 +26,7 @@ type TaskUpdate interface {
 	EndTaskLife(ctx context.Context, data any) error
 }
 
-// TaskFind - find of 'Task', 'TaskList'
+// TaskFind - find 'Task', 'TaskList'
 type TaskFind interface {
 	FindOneTask(ctx context.Context, data any) (Task, error)
 	FindTaskList(ctx context.Context, data any) ([]Task, error)
