@@ -31,8 +31,3 @@ type TaskFind interface {
 	FindOneTask(ctx context.Context, data any) (Task, error)
 	FindTaskList(ctx context.Context, data any) ([]Task, error)
 }
-
-type TaskFindUpdate interface {
-	TaskFind
-	TaskUpdate
-}
