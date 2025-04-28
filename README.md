@@ -1,4 +1,4 @@
-# Golang/chi/PostgresSQL REST API.
+# golang-chi-postgresql ~> REST API :)
 
 This code demonstrates the CRUD principle in implementing a REST API using golang/chi and PostgresSQL.  
 
@@ -11,6 +11,8 @@ This code demonstrates the CRUD principle in implementing a REST API using golan
 ├── docs  
 │   └──── docs.go         // documentation
 ├── internal
+|   ├── config
+|   │   └──── config.go   
 |   ├── model
 |   │   └──── model.go    // data models define
 |   ├── server  
@@ -34,62 +36,89 @@ This code demonstrates the CRUD principle in implementing a REST API using golan
  Dockerfile
 ...
 ```
-### [Golang - instal](https://go.dev/doc/install "https://go.dev/doc/install")
-
+#### * [Golang - instal](https://go.dev/doc/install "https://go.dev/doc/install")
 This code written in golang v1.21.0
 
-Use package:  
- * Load **.env** file to initialize database and http.Server propirties
-```
-go get github.com/joho/godotenv
-```
- *  A pure Go postgres driver for Go's database/sql  
-```
+#### * A pure Go postgres driver for Go's database/sql  
+```bash
 go get github.com/lib/pq
 ```
- * Small and composable router -> [chi](https://pkg.go.dev/github.com/go-chi/chi "https://pkg.go.dev/github.com/go-chi/chi")
-```
+#### Small and composable router -> [chi](https://pkg.go.dev/github.com/go-chi/chi "https://pkg.go.dev/github.com/go-chi/chi")
+```bash
 go get github.com/go-chi/chi/v5
 ```
- * Simple to understand and use - testing tools
-```
-go get github.com/stretchr/testify
+#### Config use the package(s):  
+Local run - Load **.env** file to initialize database and http.Server propirties, in Docker Image use ENV varialbe see Dockerfile
+```bash
+go get github.com/joho/godotenv
 ```
 
-### Docker
+[Viper](https://github.com/spf13/viper "https://github.com/spf13/viper") for read .env file and ENV variavles
+```bash
+go get github.com/spf13/viper
+```
+
+#### * Docker
 Have *compose.yaml* -> from root project
-* golang:alpine
-* postgres:alpine
+1. postgres:alpine
+2. golang:1.21.0
 
 see *Dockerfile* and *compose.yaml*
-
 ```bash
 docker compose up
 ```
 
-### Test 
+#### * Exist .golangci.yaml
+```bash
+# install golangci-lint
+go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+```
+```bash
+# start from main folder
+golangci-lint run
+```
+
+#### * Test 
+
+Simple to understand and use - testing tools
+```bash
+go get github.com/stretchr/testify
+```
+
 From root project
 ```bash
 go test ./...
 ```
 
-./pkg/common         -> 94.1% of statements  
-./internal/source    -> 60.9% of statements  
-./internal/transport -> 70.1% of statements  
-
-_**Use** From package_
-```
+for more details _**use** From package_test.go_ 
+```bash
 go test . -coverprofile=coverage.out
+```
+then use for see more details
+```bash
 go tool cover -html=coverage
 ```
 
-### CURL
- * Create new task
+##### Сoverage of packages
+
+| path to package                   | percent *%* |
+|:----------------------------------|:-----------:|
+| ./internal/source/source.go       |    58.3     |
+| ./internal/source/query.go        |    66.7     |
+|                                   |             |
+| ./internal/transport/midlweare.go |    88.9     |
+| ./internal/transport/route.go     |    68.5     |
+| ./internal/transport/transport.go |    100.0    |
+|                                   |             |
+| ./internal/common/common,go       |    90.5     |
+
+#### * CURL
+ 1. Create new task
 
 ```http request
 curl -X POST -H "Content-Type: application/json" -d '{"task_update":{"description":"test", "note":"test"}}' http://127.0.0.1:3000/task/
 ```
- * Read created task
+ 2. Read created task
 
 ```http request
 curl -i -H "Accept: application/json" http://127.0.0.1:3000/task/desc/1/0
