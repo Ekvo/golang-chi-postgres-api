@@ -4,14 +4,16 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/joho/godotenv"
+	"github.com/Ekvo/golang-chi-postgres-api/internal/config"
 )
 
 const TimeShutServer = 10 * time.Second
@@ -22,39 +24,24 @@ type Connect struct {
 }
 
 func NewServer(srv *http.Server) *Connect {
-	return &Connect{srv}
+	return &Connect{Server: srv}
 }
 
-func Init(r http.Handler, envPath string) *Connect {
-	err := godotenv.Load(envPath)
-	if err != nil {
-		log.Fatalf("server - no .env data: %v", err)
-	}
-	addr := os.Getenv("SRV_ADDR")
-	//timeRead, err := strconv.Atoi(os.Getenv("SRV_TIME_READ"))
-	//if err != nil {
-	//	log.Fatalf("server - .env data incorrect: %v", err)
-	//}
-	//timeWrite, err := strconv.Atoi(os.Getenv("SRV_TIME_WRITE"))
-	//if err != nil {
-	//	log.Fatalf("server - .env data incorrect: %v", err)
-	//}
+func Init(cfg *config.Config, r http.Handler) *Connect {
 	srv := &http.Server{
-		Addr:    addr,
+		Addr:    net.JoinHostPort("", cfg.ServerHost),
 		Handler: r,
-		//ReadTimeout:  time.Duration(timeRead),
-		//WriteTimeout: time.Duration(timeWrite),
 	}
 	return NewServer(srv)
 }
 
-func (c *Connect) ListenAndServeAndShut(ctx context.Context, timeShut time.Duration) {
-
+func (c *Connect) ListenAndServeAndShut(ctx context.Context, timeShut time.Duration) error {
 	go func() {
+		log.Print("server: Listen and serve - start\n")
 		if err := c.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("HTTP server error: %v", err)
+			log.Fatalf("server: HTTP server error - %v", err)
 		}
-		log.Println("Stopped serving new connections.")
+		log.Print("server: stopped serving\n")
 	}()
 
 	sigChan := make(chan os.Signal, 1)
@@ -65,7 +52,8 @@ func (c *Connect) ListenAndServeAndShut(ctx context.Context, timeShut time.Durat
 	defer shutdownRelease()
 
 	if err := c.Shutdown(shutdownCtx); err != nil {
-		log.Fatalf("HTTP shutdown error: %v", err)
+		return fmt.Errorf("server: HTTP shutdown error - %w", err)
 	}
-	log.Println("Graceful shutdown complete.")
+	log.Print("server: graceful shutdown complete\n")
+	return nil
 }
