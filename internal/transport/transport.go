@@ -2,8 +2,6 @@
 package transport
 
 import (
-	"context"
-	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -13,47 +11,32 @@ import (
 
 // Transport - contain HTTP route multiplexer
 type Transport struct {
-	r *chi.Mux
+	*chi.Mux
 }
 
 func NewTransport(r *chi.Mux) *Transport {
-	return &Transport{r: r}
+	return &Transport{Mux: r}
 }
 
 // in pair with 'func Timeout(timeout time.Duration) func(next http.Handler) http.Handler'
 const timeOut = 10 * time.Second
 
-func (t *Transport) Routes(db model.TaskFindUpdate) {
-	r := t.r
+type taskFindUpdate interface {
+	model.TaskFind
+	model.TaskUpdate
+}
+
+func (r *Transport) Routes(db taskFindUpdate) {
 	r.Use(Timeout(timeOut))
 	r.Mount("/task", taskRoutes(db))
 }
 
-func taskRoutes(db model.TaskFindUpdate) chi.Router {
+func taskRoutes(db taskFindUpdate) chi.Router {
 	r := chi.NewRouter()
-	r.Post("/", TaskCreate(db))
-	r.Get("/{id}", TaskByID(db))
-	r.Put("/{id}", TaskUpdate(db))
-	r.Delete("/{id}", TaskRemove(db))
-	r.Get("/{order}/{limit}/{offset}", TaskList(db))
+	r.Post("/", TaskHandler(db, taskCreate))
+	r.Get("/{id}", TaskHandler(db, taskByID))
+	r.Put("/{id}", TaskHandler(db, taskUpdate))
+	r.Delete("/{id}", TaskHandler(db, taskRemove))
+	r.Get("/{order}/{limit}/{offset}", TaskHandler(db, taskList))
 	return r
-}
-
-// Timeout - middleware
-// sets the query execution time use 'context'
-func Timeout(timeout time.Duration) func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx, cancel := context.WithTimeout(r.Context(), timeout)
-			defer func() {
-				if ctx.Err() == context.DeadlineExceeded {
-					w.WriteHeader(http.StatusGatewayTimeout)
-				}
-				cancel()
-			}()
-
-			r = r.WithContext(ctx)
-			next.ServeHTTP(w, r)
-		})
-	}
 }
