@@ -2,17 +2,15 @@ package source
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 	"time"
 
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/Ekvo/golang-chi-postgres-api/internal/config"
 	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 )
 
@@ -151,28 +149,19 @@ var qq = []struct {
 // table in base 'prometheus' - in save
 func TestQueryDbinstance(t *testing.T) {
 	asserts := assert.New(t)
+	requires := require.New(t)
 
-	if err := godotenv.Load("../../.env"); err != nil {
-		log.Fatalf("source - no .env data: %v", err)
-	}
-	dataSourceName := fmt.Sprintf(
-		`postgres://%s:%s@%s:%s/%s?sslmode=%s`,
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_TEST_NAME"),
-		os.Getenv("DB_SSLMODE"),
-	)
-	db, err := sql.Open("postgres", dataSourceName)
-	if err != nil {
-		log.Fatalf("sql.Open - %v", err)
-	}
+	cfg, err := config.NewConfig("../../.env", true)
+	requires.NoError(err, fmt.Sprintf("query_test: config error - %v", err))
+
+	db, err := Init(cfg)
+	requires.NoError(err, fmt.Sprintf("query_test: db error - %v", err))
 	defer db.Close()
-	base := NewDbinstance(db)
 
+	base := NewDbinstance(db)
 	// for clear test
-	db.Exec(`DROP TABLE tasks;`)
+	_, err = db.Exec(`DROP TABLE tasks;`)
+	requires.NoError(err, fmt.Sprintf("query_test: drop table error -%v", err))
 
 	for i, query := range qq {
 		log.Printf("\t %d query: %s\n", i+1, query.description)

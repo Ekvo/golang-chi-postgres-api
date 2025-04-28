@@ -5,10 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+
+	"github.com/Ekvo/golang-chi-postgres-api/internal/config"
 )
 
 type Dbinstance struct {
@@ -19,29 +19,34 @@ func NewDbinstance(db *sql.DB) *Dbinstance {
 	return &Dbinstance{db: db}
 }
 
-func Init(dataSourceName string) *sql.DB {
-	db, err := sql.Open("postgres", dataSourceName)
+func Init(cfg *config.Config) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dbURL(cfg))
 	if err != nil {
-		log.Fatalf("sql.Open - %v", err)
+		return nil, fmt.Errorf("source: sql.Open error - %w", err)
 	}
-	return db
+	if err := db.Ping(); err != nil {
+		go func() {
+			if err := db.Close(); err != nil {
+				log.Printf("source: DB.Close error - %v", err)
+			}
+		}()
+		return nil, fmt.Errorf("source: DB.Ping error - %w", err)
+	}
+	return db, nil
 }
 
 // URLParam - get from .env file and create dataSourceName for 'sql.Opne(,dataSourceName)'
 //
 //	postgres://jack:secret@pg.example.com:5432/mydb?sslmode=verify-ca&pool_max_conns=10&pool_max_conn_lifetime=1h30m
-func URLParam(path string) string {
-	if err := godotenv.Load(path); err != nil {
-		log.Fatalf("source - no .env data: %v", err)
-	}
+func dbURL(cfg *config.Config) string {
 	dsn := fmt.Sprintf(
 		`postgres://%s:%s@%s:%s/%s?sslmode=%s`,
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_SSLMODE"),
+		cfg.DBUser,
+		cfg.DBPassword,
+		cfg.DBHost,
+		cfg.DBPort,
+		cfg.DBName,
+		cfg.DBSSLMode,
 	)
 	return dsn
 }

@@ -6,14 +6,17 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 )
 
-var ErrSourceNotFound = errors.New("not found")
+var (
+	ErrSourceNotFound = errors.New("not found")
 
-// ErrSourceIncorrectData - incorrect (data any) passed to the function
-var ErrSourceIncorrectData = errors.New("invalid data")
+	// ErrSourceIncorrectData - incorrect (data any) passed to the function
+	ErrSourceIncorrectData = errors.New("invalid data")
+)
 
 func (d *Dbinstance) CreateTables(ctx context.Context) error {
 	_, err := d.db.ExecContext(ctx, `
@@ -30,16 +33,21 @@ CREATE TABLE IF NOT EXISTS tasks
 
 func (d *Dbinstance) SaveOneTask(ctx context.Context, data any) (uint, error) {
 	newTask := data.(model.Task)
-	taskNote := newTask.Note
-	err := d.db.QueryRowContext(ctx, `
-WITH new_task AS(
-     INSERT INTO tasks(description,note,created_at)
-     VALUES($1,$2,$3)
-     RETURNING id)
-SELECT id 
-FROM new_task;`,
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, err
+	}
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("query: insert task tx.Rollback error - %v", err)
+		}
+	}()
+	err = d.db.QueryRowContext(ctx, `
+INSERT INTO tasks(description,note,created_at)
+VALUES($1,$2,$3)
+RETURNING id;`,
 		newTask.Description,
-		sql.NullString{taskNote, len(taskNote) != 0},
+		emptyStringWriteNULL(newTask.Note),
 		newTask.CreatedAt,
 	).Scan(&newTask.ID)
 	return newTask.ID, err
@@ -47,13 +55,16 @@ FROM new_task;`,
 
 func (d *Dbinstance) UpdateTask(ctx context.Context, data any) error {
 	updateTask := data.(model.Task)
-	taskNote := updateTask.Note
 	taskID := 0
 	tx, err := d.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("query: update task tx.Rollback error - %v", err)
+		}
+	}()
 	err = tx.QueryRowContext(ctx, `
 UPDATE tasks
 SET description = $2,
@@ -63,7 +74,7 @@ WHERE id = $1
 RETURNING id;`,
 		updateTask.ID,
 		updateTask.Description,
-		sql.NullString{taskNote, len(taskNote) != 0},
+		emptyStringWriteNULL(updateTask.Note),
 		updateTask.UpdatedAt,
 	).Scan(&taskID)
 	if err != nil || uint(taskID) != updateTask.ID {
@@ -79,7 +90,11 @@ func (d *Dbinstance) EndTaskLife(ctx context.Context, data any) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("query: delete task tx.Rollback error - %v", err)
+		}
+	}()
 	err = tx.QueryRowContext(ctx, `
 DELETE 
 FROM tasks
@@ -120,6 +135,13 @@ LIMIT %s OFFSET %s;`,
 		return nil, err
 	}
 	return scanTakList(rows)
+}
+
+func emptyStringWriteNULL(line string) *string {
+	if line == "" {
+		return nil
+	}
+	return &line
 }
 
 // TaskScaner - for generic function 'scannerTask'
