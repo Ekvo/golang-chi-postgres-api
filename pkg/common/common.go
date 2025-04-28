@@ -2,16 +2,32 @@
 package common
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"mime"
 	"net/http"
+	"sort"
+	"strings"
 )
+
+var ErrCommonInvalidMedia = errors.New("invalid media type")
 
 // Message - body format for response
 type Message map[string]any
+
+// String - many keys in message
+//
+// sort keys - result was predictable
+func (msg Message) String() string {
+	lineMsg := make([]string, 0, len(msg))
+	for k, v := range msg {
+		lineMsg = append(lineMsg, fmt.Sprintf(`{%s:%v}`, k, v))
+	}
+	sort.Strings(lineMsg)
+	return strings.Join(lineMsg, ",")
+}
 
 // MessageError - error body format for response
 type MessageError struct {
@@ -23,8 +39,6 @@ func NewMessageError(key string, err error) MessageError {
 	return MessageError{Msg: errStore}
 }
 
-var ErrCommonInvalidMedia = errors.New("invalid media type")
-
 // DecodeJSON - get object from 'Request'
 // with checking an object for correct fields (look ~> ../../internal/servises/validator.go)
 func DecodeJSON(r *http.Request, obj any) error {
@@ -33,21 +47,18 @@ func DecodeJSON(r *http.Request, obj any) error {
 	if err != nil || parse != "application/json" {
 		return ErrCommonInvalidMedia
 	}
-	reqBody := r.Body
-	defer reqBody.Close()
-	dec := json.NewDecoder(reqBody)
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			log.Printf("common: r.Body.Close error - %v", err)
+		}
+	}()
+	dec := json.NewDecoder(r.Body)
 	dec.DisallowUnknownFields()
 	return dec.Decode(obj)
 }
 
 // EncodeJSON - we write the status and the object type of 'json' to 'ResponseWriter'
-//
-// if ctx.Err() == context.DeadlineExceeded - return us to 'func Timeout(timeout time.Duration)' ()
-// (look ~> ../../internal/transport/transport.go)
-func EncodeJSON(ctx context.Context, w http.ResponseWriter, status int, obj any) {
-	if ctx.Err() == context.DeadlineExceeded {
-		return
-	}
+func EncodeJSON(w http.ResponseWriter, status int, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(obj); err != nil {

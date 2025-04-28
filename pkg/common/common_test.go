@@ -2,27 +2,34 @@ package common
 
 import (
 	"bytes"
-	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/Ekvo/golang-chi-postgres-api/internal/source"
 	"github.com/Ekvo/golang-chi-postgres-api/internal/variables"
 )
 
-func TestDecodeJSON(t *testing.T) {
+func Test_Message_String(t *testing.T) {
+	msg := Message{
+		"id":      "1111",
+		"title":   "some woed",
+		"error":   "nil",
+		"created": "empty",
+	}
+	msgLine := msg.String()
+	assert.Equal(t, `{created:empty},{error:nil},{id:1111},{title:some woed}`, msgLine)
+	assert.NotEqual(t, `{error:nil},{created:empty},{id:1111},{title:some woed}`, msgLine)
+}
+
+func Test_DecodeJSON_EncodeJSON(t *testing.T) {
 	type information struct {
 		Body   string `json:"body"`
 		Access string `json:"access"`
@@ -80,23 +87,17 @@ func TestDecodeJSON(t *testing.T) {
 
 	r := chi.NewRouter()
 
-	encode := func(w http.ResponseWriter, httpStatus int, obj any) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(httpStatus)
-		_ = json.NewEncoder(w).Encode(obj)
-	}
-
 	r.Post("/secret", func(w http.ResponseWriter, r *http.Request) {
 		info := information{}
 		if err := DecodeJSON(r, &info); err != nil {
-			encode(w, http.StatusUnprocessableEntity, NewMessageError(variables.Validator, err))
+			EncodeJSON(w, http.StatusUnprocessableEntity, NewMessageError(variables.Validator, err))
 			return
 		}
 		if info.Body != "so big secret tcc" || info.Access != "1" {
-			encode(w, http.StatusForbidden, NewMessageError("information", errors.New("invalid")))
+			EncodeJSON(w, http.StatusForbidden, NewMessageError("information", errors.New("invalid")))
 			return
 		}
-		encode(w, http.StatusOK, Message{"information": "valid"})
+		EncodeJSON(w, http.StatusOK, Message{"information": "valid"})
 	})
 
 	asserts := assert.New(t)
@@ -119,76 +120,10 @@ func TestDecodeJSON(t *testing.T) {
 	}
 }
 
-func TestEncodeJSON(t *testing.T) {
-	var encodeTestData = []struct {
-		description string
-
-		// write in url number of seconds for check Deadline in EncodeJSON		/
-		ctxTimeOut int
-
-		expectedCode   int
-		responseRegexp string
-		msg            string
-	}{
-		{
-			description:    "Valid encode",
-			ctxTimeOut:     2,
-			expectedCode:   http.StatusOK,
-			responseRegexp: `"approve"`,
-			msg:            `valid Response, Header "Content-Type" "application/json" - code 200`,
-		},
-		{
-			description:  "invalid encode - timeout",
-			ctxTimeOut:   0,
-			expectedCode: http.StatusGatewayTimeout,
-			msg:          "invalid Response empty body code 504",
-		},
-	}
-
-	r := chi.NewRouter()
-	r.Get("/task/{ctx}", func(w http.ResponseWriter, r *http.Request) {
-		timeOut, _ := strconv.Atoi(chi.URLParam(r, "ctx"))
-		ctx, cancel := context.WithTimeout(r.Context(), time.Duration(timeOut)*time.Second)
-		defer func() {
-			if ctx.Err() == context.DeadlineExceeded {
-				w.WriteHeader(http.StatusGatewayTimeout)
-			}
-			cancel()
-		}()
-		time.Sleep(1 * time.Second)
-		EncodeJSON(ctx, w, http.StatusOK, "approve")
-	})
-
-	asserts := assert.New(t)
-	requires := require.New(t)
-
-	for i, test := range encodeTestData {
-		log.Printf("\t %d test encode: %s", i+1, test.description)
-
-		req, err := http.NewRequest(http.MethodGet, "/task/"+strconv.Itoa(test.ctxTimeOut), nil)
-		requires.NoError(err, fmt.Sprintf("http.NewRequest error - %v", err))
-
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, req)
-
-		code := test.expectedCode
-		asserts.Equal(code, w.Code, "Code "+test.msg)
-
-		if code == http.StatusGatewayTimeout {
-			asserts.Empty(w.Body, "Response Body should be empty:")
-		} else {
-			media := w.Header().Get("Content-Type")
-			asserts.NotEmpty(media, "Media is empty")
-			asserts.Regexp(media, "application/json", "")
-			asserts.Regexp(test.responseRegexp, w.Body.String(), "Body response "+test.msg)
-		}
-	}
-}
-
 func TestNewMessageError(t *testing.T) {
 	asserts := assert.New(t)
 
-	msgError := NewMessageError("login", source.ErrSourceNotFound)
+	msgError := NewMessageError("param", ErrCommonInvalidMedia)
 	asserts.IsType(MessageError{}, msgError, "should be type - MessageError")
-	asserts.Equal(Message{"login": "not found"}, msgError.Msg, `shoud be - map[string]any{"login": "not found"}`)
+	asserts.Equal(Message{"param": "invalid media type"}, msgError.Msg, `shoud be - map[string]any{"param": "invalid media type"}`)
 }
