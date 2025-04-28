@@ -1,14 +1,4 @@
 services:
-  web:
-    image: golang-chi-postgres-api:v1.0.0
-    build: .
-    env_file:
-      - .env
-    ports:
-      - "3000:3000"
-    volumes:
-      - .:/usr/src/app
-    command: go run cmd/app/main.go
   db:
     image: postgres:alpine
     environment:
@@ -16,9 +6,15 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
       - POSTGRES_DB=${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:${DB_PORT}"
     volumes:
-      - postgres-db:/var/lib/postgresql/data
-
+      - db-task:/var/lib/postgresql/data
+  web:
+    image: golang-chi-postgres-api:${IMAGE_VERSION}
+    build: .
+    ports:
+      - "${SRV_ADDR}:${SRV_ADDR}"
+    entrypoint: /bin/sh
+    command: /start.sh
 volumes:
-  postgres-db:
+  db-task:
