@@ -7,4 +7,12 @@ done
 
 echo "PostgreSQL is ready, starting the app..."
 
-/usr/src/app/task
+/usr/src/app/task &
+task_pid=$!
+
+# wait SIG
+trap 'echo "SIG is received, terminating process $task_pid"; kill $task_pid' SIGINT SIGTERM SIGKILL
+
+wait $task_pid
+
+echo "API stoped"
