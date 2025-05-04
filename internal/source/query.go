@@ -5,8 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/Ekvo/golang-chi-postgres-api/internal/model"
 )
@@ -121,19 +122,40 @@ func (d *Dbinstance) FindTaskList(ctx context.Context, data any) ([]model.Task, 
 	if len(taskList) != 3 {
 		return nil, ErrSourceIncorrectData
 	}
-	query := fmt.Sprintf(`
+	limit, err := strconv.Atoi(taskList[1])
+	if err != nil {
+		return nil, ErrSourceIncorrectData
+	}
+	offset, err := strconv.Atoi(taskList[2])
+	if err != nil {
+		return nil, ErrSourceIncorrectData
+	}
+	query := strings.Builder{}
+	args := make([]any, 0, 2)
+	query.WriteString(`
 SELECT * 
 FROM tasks
-ORDER BY id %s
-LIMIT %s OFFSET %s;`,
-		taskList[0], // desc or asc
-		taskList[1],
-		taskList[2],
-	)
-	rows, err := d.db.QueryContext(ctx, query)
+ORDER BY id`)
+	if taskList[0] == "desc" {
+		query.WriteString(" DESC")
+	}
+	query.WriteString("\nLIMIT $1")
+	args = append(args, limit)
+	if offset > 0 {
+		query.WriteString(" OFFSET $2")
+		args = append(args, offset)
+	}
+	query.WriteByte(';')
+
+	rows, err := d.db.QueryContext(ctx, query.String(), args...)
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("query: rows.Close error - %v", err)
+		}
+	}()
 	return scanTakList(rows)
 }
 
