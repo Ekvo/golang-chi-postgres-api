@@ -81,10 +81,10 @@ if 'common.Message' is not empty, an error describing all corrupted fields is re
  * struct - Transport  - contain ptr of chi.Mux
  * Routes - Transport member
  * func   - taskRoutes - logic application handlers
- * func   - Timeout    - middleware func
+ * func   - Timeout    - midddleware func
 ------------------------------------------------------------------------------------------------------------
- - midlweare.go
- * func - Timeout - midlweare function,
+ - middlweare.go
+ * func - Timeout - middlweare function,
 create context.WithTimeout,
 request = request.WithContext(ctx),
 call next(w,r)

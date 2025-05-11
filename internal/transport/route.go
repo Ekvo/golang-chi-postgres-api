@@ -26,7 +26,7 @@ type responseData struct {
 // taskFunc - layout of function for TashHandler
 type taskFunc func(db taskFindUpdate, r *http.Request) responseData
 
-// TaskHandler - main function on route(work with Timeout see ./midlweare.go)
+// TaskHandler - main function on route(work with Timeout see ./middlweare.go)
 //
 // call in goroutines 'taskFn' for get 'responseData' to chan 'response'
 // in 'select' checks execution time and create body for 'http.ResponseWriter'

@@ -1,4 +1,4 @@
-// midlweare - contains middleware functions
+// middlweare - contains middleware functions
 package transport
 
 import (
