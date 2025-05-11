@@ -23,8 +23,9 @@ This code demonstrates the CRUD principle in implementing a REST API using golan
 |   ├── source
 |   │   ├── query.go      // SQL query for model
 |   │   └── source.go     // init for *sql.DB
-|   ├── transport   
-|   │   ├── route.go      // business logic
+|   ├── transport 
+|   │   ├── middlweare.go    
+|   │   ├── route.go      
 |   │   └── transport.go  // router binding
 |   └── variables.go      
 |       └──── variables.go  // only const, var
